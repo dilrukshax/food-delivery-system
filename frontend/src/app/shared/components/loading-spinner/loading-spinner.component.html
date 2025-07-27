@@ -1,0 +1,19 @@
+<!-- Alternative spinner with pulse animation -->
+<div class="flex items-center justify-center" [ngClass]="sizeClasses">
+  <div class="relative" [ngClass]="pulseContainerClasses">
+    <div class="absolute inset-0 rounded-full bg-indigo-600 opacity-40 animate-ping"
+         [ngClass]="isDark ? 'bg-white/60' : 'bg-indigo-600/60'"></div>
+    <div class="relative rounded-full"
+         [ngClass]="[
+           pulseInnerClasses,
+           isDark ? 'bg-white' : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+         ]"></div>
+  </div>
+
+  <!-- Text label (optional) -->
+  <span *ngIf="label"
+        class="ml-3 font-medium"
+        [ngClass]="isDark ? 'text-white' : 'text-gray-700'">
+    {{ label }}
+  </span>
+</div>

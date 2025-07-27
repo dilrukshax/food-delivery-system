@@ -1,0 +1,315 @@
+<div class="bg-gray-50 min-h-screen pb-8">
+  <!-- Dashboard Header -->
+  <div class="bg-white shadow-sm border-b border-gray-200 mb-6">
+    <div class="container mx-auto p-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Restaurant Dashboard</h1>
+          <p class="text-gray-500 mt-1">Manage your restaurants and menu items</p>
+        </div>
+        <button
+          (click)="createRestaurant()"
+          class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Add Restaurant
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Stats Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+      <!-- Active Restaurants -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Active Restaurants</p>
+            <p class="text-2xl font-bold text-gray-900">{{ getActiveCount() }}</p>
+          </div>
+          <div class="rounded-full p-2.5 bg-green-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex items-center mt-2 text-xs text-green-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+          <span>{{ getActivePercentage() }}% of total</span>
+        </div>
+      </div>
+
+      <!-- Total Menu Items -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Total Menu Items</p>
+            <div class="flex items-center">
+              <p class="text-2xl font-bold text-gray-900">{{ getTotalMenuItems() }}</p>
+              <div *ngIf="statsLoading" class="ml-2 w-4 h-4 border-2 border-t-transparent border-indigo-500 rounded-full animate-spin"></div>
+            </div>
+          </div>
+          <div class="rounded-full p-2.5 bg-blue-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex items-center mt-2 text-xs text-blue-600">
+          <span>Across all restaurants</span>
+        </div>
+      </div>
+
+      <!-- Pending Orders -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-500 mb-1">Pending Orders</p>
+            <div class="flex items-center">
+              <p class="text-2xl font-bold text-gray-900">{{ pendingOrders }}</p>
+              <div *ngIf="statsLoading" class="ml-2 w-4 h-4 border-2 border-t-transparent border-amber-500 rounded-full animate-spin"></div>
+            </div>
+          </div>
+          <div class="rounded-full p-2.5 bg-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex items-center mt-2 text-xs text-amber-600">
+          <span>Needs your attention</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filters Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center gap-4">
+        <!-- Search Box -->
+        <div class="relative flex-grow">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            class="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Search restaurants..."
+            [(ngModel)]="searchTerm"
+            (input)="applyFilters()"
+          >
+        </div>
+
+        <!-- Status Filter -->
+        <div class="relative min-w-[150px]">
+          <select
+            [(ngModel)]="statusFilter"
+            (change)="applyFilters()"
+            class="block w-full bg-white border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Sort Filter -->
+        <div class="relative min-w-[150px]">
+          <select
+            [(ngModel)]="sortBy"
+            (change)="applyFilters()"
+            class="block w-full bg-white border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="newest">Sort by Newest</option>
+            <option value="oldest">Sort by Oldest</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-600 font-medium">Loading your restaurants...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="bg-red-50 border border-red-200 text-red-800 px-6 py-5 rounded-xl shadow-sm mb-6 flex items-start">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <h3 class="text-lg font-medium mb-1">Error Loading Data</h3>
+        <p>{{ error }}</p>
+        <button (click)="reloadData()" class="mt-2 inline-flex items-center text-sm font-medium text-red-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Try Again
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && restaurants.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+      <div class="max-w-md mx-auto">
+        <div class="rounded-full bg-indigo-100 p-4 mx-auto w-20 h-20 flex items-center justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-medium text-gray-900 mb-3">No Restaurants Yet</h3>
+        <p class="text-gray-600 mb-6">Get started by adding your first restaurant to manage menus, orders, and more.</p>
+        <button (click)="createRestaurant()" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow-sm hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300">
+          <span class="flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Create Your First Restaurant
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Restaurant Cards -->
+    <div *ngIf="!loading && !error && restaurants.length > 0" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div *ngFor="let restaurant of filteredRestaurants" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md group">
+        <!-- Restaurant Image Header -->
+        <div class="h-48 bg-gray-100 relative">
+          <img
+            *ngIf="restaurant.imageUrls && restaurant.imageUrls.length > 0"
+            [src]="restaurant.imageUrls[0]"
+            alt="{{ restaurant.name }}"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onerror="this.src='assets/images/default-restaurant.jpg'"
+          >
+          <img
+            *ngIf="!restaurant.imageUrls || restaurant.imageUrls.length === 0"
+            src="assets/images/default-restaurant.jpg"
+            alt="{{ restaurant.name }}"
+            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          >
+
+          <!-- Status Badge -->
+          <div class="absolute top-4 right-4">
+            <span
+              [ngClass]="restaurant.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+              class="px-3 py-1.5 rounded-full text-xs font-medium flex items-center"
+            >
+              <span [ngClass]="restaurant.active ? 'bg-green-500' : 'bg-red-500'" class="w-2 h-2 rounded-full mr-1.5 animate-pulse"></span>
+              {{ restaurant.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <!-- Quick Stats Badge -->
+          <div class="absolute left-4 bottom-4 flex space-x-2">
+            <span class="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <div class="flex items-center">
+                {{ getMenuItemCount(restaurant.id) }}
+                <div *ngIf="statsLoading" class="ml-1 w-2.5 h-2.5 border-t-transparent border border-indigo-500 rounded-full animate-spin"></div>
+                <span class="ml-0.5">Items</span>
+              </div>
+            </span>
+            <span class="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <div class="flex items-center">
+                {{ getOrderCount(restaurant.id) }}
+                <div *ngIf="statsLoading" class="ml-1 w-2.5 h-2.5 border-t-transparent border border-amber-500 rounded-full animate-spin"></div>
+                <span class="ml-0.5">Orders</span>
+              </div>
+            </span>
+          </div>
+        </div>
+
+        <!-- Restaurant Content -->
+        <div class="p-5">
+          <h3 class="font-semibold text-lg text-gray-900 mb-1">{{ restaurant.name }}</h3>
+          <p *ngIf="restaurant.address" class="text-gray-600 text-sm mb-3 flex items-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="line-clamp-1">{{ restaurant.address }}</span>
+          </p>
+          <p *ngIf="!restaurant.address" class="text-gray-500 text-sm mb-3">No address provided</p>
+
+          <div class="text-xs text-gray-500 mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Added on {{ formatDate(restaurant.createdAt) }}
+          </div>
+
+          <!-- Actions Row -->
+          <div class="pt-3 border-t border-gray-100 grid grid-cols-2 gap-2 mt-1">
+            <button
+              (click)="editRestaurant(restaurant.id)"
+              class="flex items-center justify-center py-2 px-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-colors"
+              title="Edit restaurant details"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Details
+            </button>
+
+            <button
+              (click)="manageMenu(restaurant.id)"
+              class="flex items-center justify-center py-2 px-3 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-colors"
+              title="Manage menu items"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Manage Menu
+            </button>
+
+            <button
+              (click)="viewOrders(restaurant.id)"
+              class="flex items-center justify-center py-2 px-3 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors"
+              title="View restaurant orders"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              View Orders
+            </button>
+
+            <button
+              (click)="deleteRestaurant(restaurant.id)"
+              class="flex items-center justify-center py-2 px-3 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+              title="Delete this restaurant"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
