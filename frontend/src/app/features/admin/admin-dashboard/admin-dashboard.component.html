@@ -1,0 +1,18 @@
+<!-- src/app/features/admin/admin-dashboard/admin-dashboard.component.html -->
+<div class="flex h-screen bg-gray-100">
+
+  <!-- Main content -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+    <!-- Mobile header -->
+    <div class="md:hidden bg-indigo-800 text-white p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Admin Dashboard</h2>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <main class="flex-1 overflow-y-auto bg-gray-100">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

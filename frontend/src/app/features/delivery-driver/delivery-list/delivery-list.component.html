@@ -1,0 +1,262 @@
+<div class="bg-gray-50 min-h-screen pb-8">
+  <!-- Dashboard Header -->
+  <div class="bg-white shadow-sm border-b border-gray-200 mb-6">
+    <div class="container mx-auto px-4 sm:px-6 py-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-900">Delivery Dashboard</h1>
+        <button
+          (click)="refreshDeliveries()"
+          class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow hover:from-indigo-700 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 sm:px-6">
+    <!-- Alert for current delivery -->
+    <div *ngIf="currentDelivery" class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg mb-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div class="mb-4 md:mb-0">
+          <p class="font-bold text-blue-800">You have an active delivery</p>
+          <p class="text-blue-700">Order #{{ currentDelivery.orderId }} - {{ currentDelivery.deliveryStatus }}</p>
+        </div>
+        <button
+          (click)="continueDelivery()"
+          class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg shadow hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-500/30 transition-all duration-300">
+          Continue Delivery
+        </button>
+      </div>
+    </div>
+
+    <!-- Success message -->
+    <div *ngIf="success" class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 shadow-sm">
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span>{{ success }}</span>
+      </div>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm">
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+      <div class="flex border-b border-gray-200">
+        <button
+          (click)="setActiveTab('assigned')"
+          class="flex-1 px-4 py-4 text-sm md:text-base font-medium transition-colors"
+          [ngClass]="activeTab === 'assigned' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'">
+          Assigned Deliveries
+        </button>
+        <button
+          (click)="setActiveTab('completed')"
+          class="flex-1 px-4 py-4 text-sm md:text-base font-medium transition-colors"
+          [ngClass]="activeTab === 'completed' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'">
+          Completed Deliveries
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading" class="flex justify-center py-12">
+      <div class="h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Assigned Deliveries Tab Content -->
+    <div *ngIf="!loading && activeTab === 'assigned'">
+      <div *ngIf="assignedDeliveries.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+        <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">No deliveries assigned to you</h3>
+        <p class="text-gray-500">Check back soon for new delivery assignments</p>
+      </div>
+
+      <div *ngIf="assignedDeliveries.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let delivery of assignedDeliveries" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md group">
+          <!-- Delivery header with restaurant name and order number -->
+          <div class="p-4 bg-gray-50 border-b border-gray-100">
+            <div class="flex justify-between items-center">
+              <h3 class="font-medium text-gray-900">{{ getRestaurantName(delivery.id) }}</h3>
+              <span
+                [ngClass]="getStatusClass(delivery.deliveryStatus)"
+                class="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                <span class="w-1.5 h-1.5 rounded-full mr-1.5 animate-pulse"
+                      [ngClass]="{
+                        'bg-yellow-500': delivery.deliveryStatus === 'PENDING',
+                        'bg-blue-500': delivery.deliveryStatus === 'ASSIGNED',
+                        'bg-purple-500': delivery.deliveryStatus === 'PICKED_UP',
+                        'bg-green-500': delivery.deliveryStatus === 'DELIVERED',
+                        'bg-red-500': delivery.deliveryStatus === 'CANCELLED',
+                        'bg-gray-500': !['PENDING', 'ASSIGNED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'].includes(delivery.deliveryStatus)
+                      }"></span>
+                {{ delivery.deliveryStatus }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-500">Order #{{ delivery.orderId }}</p>
+          </div>
+
+          <!-- Delivery details -->
+          <div class="p-5 space-y-4">
+            <!-- Restaurant location -->
+            <div class="flex">
+              <div class="flex-shrink-0 h-8 w-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-green-700">Restaurant Pickup</p>
+                <p class="text-sm text-gray-700">{{ getRestaurantAddress(delivery.id) }}</p>
+              </div>
+            </div>
+
+            <!-- Customer location with address -->
+            <div class="flex">
+              <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-blue-700">Customer Delivery</p>
+                <p class="text-sm text-gray-700">{{ getCustomerAddress(delivery.id) }}</p>
+
+                <!-- Customer Details -->
+                <div class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <div class="text-xs font-medium text-gray-700 mb-1">Customer Details:</div>
+                  <div class="text-sm text-gray-900">{{ getCustomerInfo(delivery.id).name }}</div>
+                  <div class="text-xs text-gray-600 flex flex-col space-y-1 mt-1">
+                    <span *ngIf="getCustomerInfo(delivery.id).phone !== 'N/A'" class="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                      </svg>
+                      {{ getCustomerInfo(delivery.id).phone }}
+                    </span>
+                    <span *ngIf="getCustomerInfo(delivery.id).email !== 'N/A'" class="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                      </svg>
+                      {{ getCustomerInfo(delivery.id).email }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery distance -->
+            <div class="flex items-center justify-center pt-2 border-t border-gray-100">
+              <div class="inline-flex items-center bg-gray-50 px-3 py-1.5 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <span class="text-sm text-gray-700">Distance: {{ getDeliveryDetails(delivery.id).distance || 'Calculating...' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="p-4 bg-gray-50 border-t border-gray-100">
+            <button
+              (click)="pickupDelivery(delivery)"
+              [disabled]="currentDelivery !== null"
+              class="w-full flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              {{ currentDelivery ? 'Already have active delivery' : 'Pick Up Delivery' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Deliveries Tab Content -->
+    <div *ngIf="!loading && activeTab === 'completed'">
+      <div *ngIf="completedDeliveries.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+        <div class="mx-auto w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">No completed deliveries yet</h3>
+        <p class="text-gray-500">Your completed deliveries will appear here</p>
+      </div>
+
+      <div *ngIf="completedDeliveries.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let delivery of completedDeliveries" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md group">
+          <!-- Delivery header with restaurant name and order number -->
+          <div class="p-4 bg-gray-50 border-b border-gray-100">
+            <div class="flex justify-between items-center">
+              <h3 class="font-medium text-gray-900">{{ getRestaurantName(delivery.id) }}</h3>
+              <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium inline-flex items-center">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
+                Delivered
+              </span>
+            </div>
+            <p class="text-sm text-gray-500">Order #{{ delivery.orderId }}</p>
+          </div>
+
+          <!-- Delivery details -->
+          <div class="p-5 space-y-4">
+            <!-- Customer location with address -->
+            <div class="flex">
+              <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-blue-700">Customer Address</p>
+                <p class="text-sm text-gray-700">{{ getCustomerAddress(delivery.id) }}</p>
+              </div>
+            </div>
+
+            <!-- Delivery details -->
+            <div class="flex flex-col space-y-2">
+              <div class="flex items-center justify-between border-t border-b border-gray-100 py-2">
+                <span class="text-sm text-gray-500">Delivered on:</span>
+                <span class="text-sm font-medium text-gray-900">{{ delivery.completedAt ? (delivery.completedAt | date:'medium') : 'Unknown' }}</span>
+              </div>
+              <div class="flex items-center justify-between border-b border-gray-100 py-2">
+                <span class="text-sm text-gray-500">Distance:</span>
+                <span class="text-sm font-medium text-gray-900">{{ getDeliveryDetails(delivery.id).distance || 'Unknown' }}</span>
+              </div>
+              <div class="flex items-center justify-between border-b border-gray-100 py-2">
+                <span class="text-sm text-gray-500">Customer:</span>
+                <span class="text-sm font-medium text-gray-900">{{ getCustomerInfo(delivery.id).name }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card footer -->
+          <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
+            <div class="inline-flex items-center text-green-700 bg-green-50 px-3 py-1.5 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-sm font-medium">Successfully Delivered</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
