@@ -1,22 +1,11 @@
-# Stage 1: Build Angular app
-FROM node:18-alpine AS builder
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
+# Build Angular app
+FROM node:20 AS build
+WORKDIR /app
 COPY . .
-RUN npm run build --prod
+RUN npm install
+RUN npm run build --configuration=production
 
-# Stage 2: Serve with Nginx
-FROM nginx:1.15.8-alpine
-
-# Remove default Nginx config
-RUN rm -rf /etc/nginx/conf.d/*
-
-# Copy custom Nginx config
-COPY nginx/nginx.conf /etc/nginx/conf.d/
-
-# Copy built assets from builder
-COPY --from=builder /usr/src/app/dist/food-ordering-frontend /usr/share/nginx/html
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Serve with nginx
+FROM nginx:stable-alpine
+COPY --from=build /app/dist/food-ordering-frontend/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
