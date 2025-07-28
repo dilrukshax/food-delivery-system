@@ -4,19 +4,11 @@ metadata:
   name: food-ordering-ingress
   namespace: food-ordering
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-    - host: food-ordering.local
-      http:
+    - http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: frontend
-                port:
-                  number: 80
           - path: /api
             pathType: Prefix
             backend:
@@ -24,3 +16,10 @@ spec:
                 name: api-gateway
                 port:
                   number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
