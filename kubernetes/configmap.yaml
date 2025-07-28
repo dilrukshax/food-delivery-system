@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: food-ordering-config
+  namespace: food-ordering
+data:
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  API_GATEWAY_URL: "http://api-gateway:8080"

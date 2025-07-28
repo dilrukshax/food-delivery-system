@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # ---- Databases ----
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: Charuka@0
+      POSTGRES_USER: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - food-ordering-network
+
+  # ---- Backend Services ----
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - food-ordering-network
+
+
+  user-service:
+    build:
+      context: ./backend/user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/user_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+    networks:
+      - food-ordering-network
+
+  restaurant-service:
+    build:
+      context: ./backend/restaurant-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/restaurant_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+    networks:
+      - food-ordering-network
+
+  order-service:
+    build:
+      context: ./backend/order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/order_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+      - restaurant-service
+    networks:
+      - food-ordering-network
+
+  payment-service:
+    build:
+      context: ./backend/payment-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/payment_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+    networks:
+      - food-ordering-network
+
+  delivery-service:
+    build:
+      context: ./backend/delivery-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/delivery_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+    networks:
+      - food-ordering-network
+
+  notification-service:
+    build:
+      context: ./backend/notification-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/notification_service_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Charuka@0
+    depends_on:
+      - postgres
+    networks:
+      - food-ordering-network
+
+  # ---- Frontend ----
+  frontend:
+    build:
+      context: ./frontend/food-ordering-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - food-ordering-network
+
+networks:
+  food-ordering-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

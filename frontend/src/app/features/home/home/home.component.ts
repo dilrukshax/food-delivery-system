@@ -7,6 +7,14 @@ import { MenuItem } from '../../../core/models/menu-item.model';
 import { CartService } from '../../../core/services/cart.service';
 import { interval, Subscription } from 'rxjs';
 
+interface HeroSlide {
+  imageUrl: string;
+  title: string;
+  description: string;
+  alt: string;
+  restaurant?: Restaurant;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -15,8 +23,14 @@ import { interval, Subscription } from 'rxjs';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit, OnDestroy {
-  // Hero slider
-  heroSlides = [
+  // Hero slider with dynamic restaurant images
+  heroSlides: HeroSlide[] = [];
+  currentSlide = 0;
+  sliderInterval: Subscription | null = null;
+  heroSlidesLoaded = false;
+
+  // Default fallback slides in case restaurants don't load
+  defaultHeroSlides: HeroSlide[] = [
     {
       imageUrl: 'assets/images/hero-1.jpg',
       title: 'Delicious Food Delivered',
@@ -36,8 +50,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       alt: 'Special offers'
     }
   ];
-  currentSlide = 0;
-  sliderInterval: Subscription | null = null;
 
   // Restaurants
   restaurants: Restaurant[] = [];
@@ -63,10 +75,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.loadHeroSlides();
     this.loadRestaurants();
     this.loadFeaturedMenuItems();
     this.loadAllMenuItems();
-    this.startSliderInterval();
   }
 
   ngOnDestroy(): void {
@@ -75,10 +87,51 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  startSliderInterval(): void {
-    this.sliderInterval = interval(5000).subscribe(() => {
-      this.nextSlide();
+  loadHeroSlides(): void {
+    this.restaurantService.getAllRestaurants().subscribe({
+      next: (restaurants) => {
+        if (restaurants && restaurants.length > 0) {
+          // Filter restaurants that have images and take the first 5 recent ones
+          const restaurantsWithImages = restaurants
+            .filter(restaurant => restaurant.imageUrls && restaurant.imageUrls.length > 0)
+            .slice(0, 5);
+
+          if (restaurantsWithImages.length > 0) {
+            this.heroSlides = restaurantsWithImages.map((restaurant, index) => ({
+              imageUrl: restaurant.imageUrls[0],
+              title: `Discover ${restaurant.name}`,
+              description: `Experience amazing flavors at ${restaurant.name}. ${restaurant.address}`,
+              alt: `${restaurant.name} restaurant`,
+              restaurant: restaurant
+            }));
+          } else {
+            // Fallback to default slides if no restaurants have images
+            this.heroSlides = [...this.defaultHeroSlides];
+          }
+        } else {
+          // Fallback to default slides if no restaurants
+          this.heroSlides = [...this.defaultHeroSlides];
+        }
+
+        this.heroSlidesLoaded = true;
+        this.startSliderInterval();
+      },
+      error: (error) => {
+        console.error('Failed to load restaurants for hero slider:', error);
+        // Use default slides on error
+        this.heroSlides = [...this.defaultHeroSlides];
+        this.heroSlidesLoaded = true;
+        this.startSliderInterval();
+      }
     });
+  }
+
+  startSliderInterval(): void {
+    if (this.heroSlides.length > 1) {
+      this.sliderInterval = interval(5000).subscribe(() => {
+        this.nextSlide();
+      });
+    }
   }
 
   prevSlide(): void {
@@ -103,6 +156,16 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.startSliderInterval();
     }
     this.currentSlide = index;
+  }
+
+  // Navigate to restaurant when hero slide is clicked
+  onHeroSlideClick(): void {
+    const currentHeroSlide = this.heroSlides[this.currentSlide];
+    if (currentHeroSlide.restaurant) {
+      // You can navigate to the restaurant details page here
+      // this.router.navigate(['/restaurants', currentHeroSlide.restaurant.id]);
+      console.log('Navigate to restaurant:', currentHeroSlide.restaurant.id);
+    }
   }
 
   loadRestaurants(): void {

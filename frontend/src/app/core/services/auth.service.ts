@@ -202,4 +202,79 @@ export class AuthService {
       }
     });
   }
+
+  redirectBasedOnRole(): void {
+    const user = this.currentUserValue;
+    if (!user) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    switch (user.role) {
+      case 'CUSTOMER':
+        this.router.navigate(['/']);
+        break;
+      case 'RESTAURANT_ADMIN':
+        this.router.navigate(['/restaurant-admin']);
+        break;
+      case 'DELIVERY_DRIVER':
+        this.router.navigate(['/driver']);
+        break;
+      case 'SYSTEM_ADMIN':
+        this.router.navigate(['/admin']);
+        break;
+      default:
+        this.router.navigate(['/auth/login']);
+        break;
+    }
+  }
+
+  /**
+   * Get home route based on user role
+   */
+  getHomeDashboard(): string {
+    const user = this.currentUserValue;
+    if (!user) return '/auth/login';
+
+    switch (user.role) {
+      case 'CUSTOMER':
+        return '/';
+      case 'RESTAURANT_ADMIN':
+        return '/restaurant-admin';
+      case 'DELIVERY_DRIVER':
+        return '/driver';
+      case 'SYSTEM_ADMIN':
+        return '/admin';
+      default:
+        return '/auth/login';
+    }
+  }
+
+  /**
+   * Check if user can access customer pages
+   */
+  canAccessCustomerPages(): boolean {
+    return this.hasRole(['CUSTOMER']);
+  }
+
+  /**
+   * Get dashboard route for current user
+   */
+  getDashboardRoute(): string {
+    const user = this.currentUserValue;
+    if (!user) return '/auth/login';
+
+    switch (user.role) {
+      case 'CUSTOMER':
+        return '/';
+      case 'RESTAURANT_ADMIN':
+        return '/restaurant-admin';
+      case 'DELIVERY_DRIVER':
+        return '/driver';
+      case 'SYSTEM_ADMIN':
+        return '/admin';
+      default:
+        return '/auth/login';
+    }
+  }
 }

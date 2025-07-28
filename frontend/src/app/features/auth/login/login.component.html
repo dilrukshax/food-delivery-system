@@ -3,8 +3,8 @@
   <!-- Card container -->
   <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden">
     <!-- Two-column split inside the card -->
-    <div class="flex flex-col md:flex-row">
-      <!-- Left section - Promotional Panel with Gradient (preserved) -->
+    <div class="flex flex-col md:flex-row min-h-[600px]">
+      <!-- Left section - Promotional Panel with Gradient -->
       <div class="w-full md:w-1/2 bg-gradient-to-br from-indigo-600 via-blue-500 to-purple-600 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden">
         <!-- Background pattern -->
         <div class="absolute inset-0 opacity-10">
@@ -18,11 +18,11 @@
             New for 2025
           </div>
           <h2 class="text-3xl md:text-4xl font-bold mb-4">Faster Delivery, <br/>Better Service</h2>
-          <p class="text-white/80 text-lg max-w-md leading-relaxed">
+          <p class="text-white/80 text-lg max-w-md leading-relaxed mb-8">
             We've improved our platform with new features to enhance your food ordering experience.
           </p>
 
-          <div class="mt-8 grid grid-cols-2 gap-4 max-w-xs mx-auto">
+          <div class="grid grid-cols-2 gap-4 max-w-xs mx-auto">
             <div class="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl p-3 transition-all hover:bg-white/20">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -67,7 +67,7 @@
           <p class="text-center text-gray-500 mb-6">Log in to your account to continue</p>
 
           <div *ngIf="error" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
             </svg>
             <span>{{ error }}</span>
@@ -88,6 +88,7 @@
                   type="email"
                   autocomplete="email"
                   required
+                  autofocus
                   class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                   placeholder="Enter your email"
                 >
@@ -101,6 +102,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">Forgot password?</a>
               </div>
               <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -135,7 +137,7 @@
               <button
                 type="submit"
                 [disabled]="loading"
-                class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md transition-all"
+                class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span *ngIf="loading" class="mr-2">
                   <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
