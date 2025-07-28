@@ -49,7 +49,6 @@ export class LoginComponent implements OnInit {
   onSubmit() {
     this.submitted = true;
 
-    // Stop if form is invalid
     if (this.loginForm.invalid) {
       return;
     }
@@ -61,7 +60,8 @@ export class LoginComponent implements OnInit {
       .pipe(first())
       .subscribe({
         next: () => {
-          this.router.navigate([this.returnUrl]);
+          // Redirect based on user role instead of returnUrl
+          this.authService.redirectBasedOnRole();
         },
         error: error => {
           this.error = error;
@@ -69,4 +69,5 @@ export class LoginComponent implements OnInit {
         }
       });
   }
+
 }

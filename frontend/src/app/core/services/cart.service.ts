@@ -1,5 +1,6 @@
 // src/app/core/services/cart.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { MenuItem } from '../models/menu-item.model';
 import { OrderItemRequest } from '../models/order.model';
@@ -16,13 +17,22 @@ export class CartService {
   private cartItems: CartItem[] = [];
   private restaurantId: number | null = null;
   private cartItemsSubject = new BehaviorSubject<CartItem[]>([]);
+  private isBrowser: boolean;
 
-  constructor() {
-    // Load cart from localStorage if available
-    this.loadCart();
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    // Only load cart if we're in browser environment
+    if (this.isBrowser) {
+      this.loadCart();
+    }
   }
 
   private loadCart(): void {
+    // Only proceed if we're in browser environment
+    if (!this.isBrowser) {
+      return;
+    }
+
     try {
       const savedCart = localStorage.getItem('cart');
       const savedRestaurantId = localStorage.getItem('cartRestaurantId');
@@ -42,13 +52,20 @@ export class CartService {
       // Reset cart if there's an error
       this.cartItems = [];
       this.restaurantId = null;
-      localStorage.removeItem('cart');
-      localStorage.removeItem('cartRestaurantId');
+      if (this.isBrowser) {
+        localStorage.removeItem('cart');
+        localStorage.removeItem('cartRestaurantId');
+      }
       this.cartItemsSubject.next([]);
     }
   }
 
   private saveCart(): void {
+    // Only proceed if we're in browser environment
+    if (!this.isBrowser) {
+      return;
+    }
+
     try {
       localStorage.setItem('cart', JSON.stringify(this.cartItems));
 
@@ -133,8 +150,12 @@ export class CartService {
   clearCart(): void {
     this.cartItems = [];
     this.restaurantId = null;
-    localStorage.removeItem('cart');
-    localStorage.removeItem('cartRestaurantId');
+
+    if (this.isBrowser) {
+      localStorage.removeItem('cart');
+      localStorage.removeItem('cartRestaurantId');
+    }
+
     this.cartItemsSubject.next([]);
     console.log('CartService: Cart cleared');
   }
