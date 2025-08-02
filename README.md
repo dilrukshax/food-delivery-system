@@ -1,287 +1,373 @@
-# 🍔Food Ordering System
+# 🍽️ Food Ordering and Delivery System
 
-A comprehensive microservices-based food ordering platform designed to handle restaurant listings, user management, order processing, payment handling, delivery tracking, and notifications.
+This is a **microservices-based food ordering and delivery system** designed to provide a scalable, modular, and secure platform for ordering meals, managing restaurants, handling payments, and tracking deliveries in real time.
 
-## Project Overview
+<div align="center">
+  <img src="https://img.shields.io/badge/SpringBoot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" />
+  <img src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kafka-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Eureka-0078D7?style=for-the-badge&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+</div>
 
-This Food Ordering System is built using a microservices architecture, enabling scalability, resilience, and independent development of each service. The system can be deployed using either Docker Compose for development or Kubernetes for production environments.
 
-## Architecture
 
-The application follows a modern microservices architecture with:
+## 📌 Project Overview
 
-- **Frontend**: Angular-based user interface
-- **API Gateway**: Central entry point that routes requests to appropriate microservices
-- **Backend Microservices**: Independent services for specific business domains
-- **Database**: PostgreSQL for data persistence
-- **Deployment**: Docker containers orchestrated with Docker Compose or Kubernetes
+The system simulates a real-world food ordering platform like Uber Eats or DoorDash, supporting multiple user roles including customers, restaurants, delivery partners, and administrators.
 
-## Core Services
+Each functionality is encapsulated in independent services to ensure maintainability and scalability using Spring Boot, Angular, Kafka, and JWT-based authentication.
 
-### API Gateway
-Central entry point for all client requests, handling authentication, request routing, and load balancing.
 
-**Key Features:**
-- JWT-based authentication and authorization
-- Request routing to appropriate microservices
-- Rate limiting and circuit breaking
+##  Features
 
-### User Service
-Manages user accounts, authentication, and profile information.
+###  **Customer Features**
+```
+- Restaurant discovery with location-based filtering 
+- Menu browsing with images and descriptions
+- Shopping cart with quantity management
+- Secure checkout with Stripe payment processing
+- Real-time order tracking via WebSocket
+- Live GPS tracking of delivery drivers
+- Multiple delivery addresses management
+- Complete order history with reorder functionality
+```
+###  **Restaurant Admin Features**
+```
+- Restaurant profile management
+- Menu management with image uploads
+- Order management and status updates
+- Azure Storage integration for cloud file management
+- Sales analytics and reporting
+- Real-time order notifications
+```
+###  **Delivery Driver Features**
+```
+- Automatic delivery assignment system
+- Real-time GPS location updates
+- Delivery status management
+- Complete delivery history and statistics
+```
+###  **System Admin Features**
+```
+- Comprehensive user management
+- Role-based access control
+- System monitoring and health checks
+- Platform-wide analytics and insights
+```
 
-**Key Features:**
-- User registration and login
-- Profile management
-- Authentication and authorization
+##  Key Functionalities by Service
 
-### Restaurant Service
-Handles restaurant details, menus, and availability.
+###  **User Service**
+- Handles user registration, login, and profile management.
+- Secure authentication using Spring Security and JWT.
+- Role-based access control (`CUSTOMER`, `RESTAURANT`, `DELIVERY`, `ADMIN`).
+- Endpoints to fetch user roles and details.
 
-**Key Features:**
-- Restaurant registration and management
-- Menu creation and management
-- Inventory and availability tracking
+###  **Restaurant Service**
+- Allows restaurant owners to:
+  - Add, update, or delete restaurants.
+  - Upload and manage restaurant profile images.
+  - Manage menu items (CRUD).
+- Uses Azure Blob Storage for image handling.
+- Ensures authorization for modifying content.
 
-### Order Service
-Processes food orders from creation to completion.
+###  **Order Service**
+- Enables customers to:
+  - Place orders based on selected restaurant and food items.
+  - View order history.
+- Enables restaurants and delivery agents to:
+  - Accept/reject orders.
+  - Update order status (`Pending`, `Preparing`, `Out for Delivery`, `Delivered`).
+- Publishes order events to Kafka.
 
-**Key Features:**
-- Order creation and tracking
-- Order status updates
-- Order history
+###  **Payment Service**
+- Integrates with **Stripe API** for secure payment processing.
+- Confirms payment success and emits events to Kafka.
 
-### Payment Service
-Manages payment processing and transactions.
+###  **Delivery Service**
+- Assigns delivery partners to active orders.
+- Delivery agents can:
+  - Accept assignments.
+  - Update delivery status (`Picked`, `In Transit`, `Delivered`).
+- Listens to Kafka order events.
 
-**Key Features:**
-- Payment processing
-- Transaction history
-- Multiple payment method support
+###  **Notification Service**
+- Listens to Kafka events from orders, payments, and deliveries.
+- Sends email notifications for:
+  - Order confirmation and status changes.
+  - Payment confirmations.
+  - Delivery progress.
+- Uses Spring Mail for async mail delivery.
 
-### Delivery Service
-Tracks and manages food delivery logistics.
+###  **API Gateway**
+- Central gateway using Spring Cloud Gateway.
+- Handles routing, JWT validation, and CORS configuration.
 
-**Key Features:**
-- Delivery assignment
-- Delivery tracking
-- Delivery status updates
+###  **Service Discovery**
+- Uses Eureka for registering and discovering services by name.
+- Enables scalable microservice interaction.
 
-### Notification Service
-Handles system notifications across various channels.
 
-**Key Features:**
-- Email notifications
-- SMS notifications
-- In-app notifications
 
-### Frontend
-Angular-based user interface for customers and restaurant owners.
+##  Technologies Used
 
-**Key Features:**
-- Responsive design
-- Order placement and tracking
-- Restaurant browsing and menu viewing
+- **Backend**: Spring Boot, Spring Cloud, Spring Security, Kafka, Stripe, Mail, Eureka
+- **Frontend**: Angular
+- **Authentication**: JWT
+- **Storage**: Azure Blob Storage
+- **Messaging**: Apache Kafka
+- **Database**: PostgreSQL (per service)
+- **Service Discovery:** Netflix Eureka
+- **Payment Processing:** Stripe Java SDK
+- **Documentation:** OpenAPI/Swagger
+- **Containerization:** Docker + Kubernetes
 
-## Technologies Used
+## 📁 Project Structure
 
-### Backend
-- **Java/Spring Boot**: For microservices implementation
-- **Spring Cloud**: For microservices communication and configuration
-- **PostgreSQL**: For data persistence
-- **JWT**: For secure authentication
+```
 
-### Frontend
-- **Angular**: For building responsive UI
-- **TypeScript**: For type-safe JavaScript development
-- **Jasmine**: For testing
+food-ordering-system/
+├── backend/                          # Backend microservices
+│   ├── api-gateway/                  # API Gateway service (Port 8080)
+│   │   ├── src/main/java/com/foodordering/apigateway/
+│   │   │   ├── config/              # Security, CORS, Swagger configs
+│   │   │   ├── filter/              # JWT and header filters
+│   │   │   └── util/                # JWT utilities
+│   │   └── Dockerfile
+│   ├── user-service/                # User management service (Port 8081)
+│   │   ├── src/main/java/com/foodordering/userservice/
+│   │   │   ├── config/              # Security, JWT, Azure configs
+│   │   │   ├── controller/          # REST controllers
+│   │   │   ├── dto/                 # Data Transfer Objects
+│   │   │   ├── entity/              # JPA entities
+│   │   │   ├── repository/          # Data repositories
+│   │   │   ├── service/             # Business logic
+│   │   │   └── util/                # Utilities
+│   │   └── Dockerfile
+│   ├── restaurant-service/          # Restaurant management (Port 8082)
+│   ├── order-service/               # Order processing (Port 8083)
+│   ├── payment-service/             # Payment processing (Port 8084)
+│   ├── delivery-service/            # Delivery management (Port 8085)
+│   ├── notification-service/        # Real-time notifications (Port 8086)
+│   └── service-registry/            # Eureka service registry (Port 8761)
+├── frontend/                        # Angular frontend application
+│   ├── src/app/
+│   │   ├── core/                    # Core functionality
+│   │   │   ├── guards/              # Route guards
+│   │   │   ├── interceptors/        # HTTP interceptors
+│   │   │   ├── models/              # TypeScript interfaces
+│   │   │   └── services/            # Angular services
+│   │   ├── features/                # Feature modules
+│   │   │   ├── admin/               # Admin dashboard
+│   │   │   ├── auth/                # Authentication
+│   │   │   ├── delivery-driver/     # Driver interface
+│   │   │   ├── order/               # Order management
+│   │   │   ├── restaurant/          # Restaurant features
+│   │   │   ├── restaurant-admin/    # Restaurant admin panel
+│   │   │   └── user/                # User profile
+│   │   └── shared/                  # Shared components
+│   ├── nginx/                       # Nginx configuration
+│   └── Dockerfile
+├── kubernetes/                      # Kubernetes deployment configs
+│   ├── api-gateway/
+│   ├── user-service/
+│   ├── restaurant-service/
+│   ├── order-service/
+│   ├── payment-service/
+│   ├── delivery-service/
+│   ├── notification-service/
+│   ├── postgres/
+│   └── frontend/
+├── docker-compose.yml               # Docker Compose setup
+├── init-db.sql                      # Database initialization
+└── README.md                        # This file
 
-### DevOps & Deployment
-- **Docker**: For containerization
-- **Kubernetes**: For container orchestration
-- **Minikube**: For local Kubernetes development
-- **Docker Compose**: For local development environment
+```
 
-## Getting Started
+##  Setup Instructions
 
-### Prerequisites
-- Docker and Docker Compose
-- Kubernetes and Minikube (for Kubernetes deployment)
+### ✅ Prerequisites
 - Java 17+
-- Node.js 16+
-- npm 8+
+- Node.js & Angular CLI
+- PostgreSQL
+- Kafka & Zookeeper
+- Docker (optional)
+- Stripe API keys
+- Azure Blob Storage credentials
 
-### Installation and Setup
 
-#### Using Docker Compose (Development)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/food-ordering-system.git
-   cd food-ordering-system
-   ```
-
-2. Start the services using Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. The application will be available at:
-   - Frontend: http://localhost:80
-   - API Gateway: http://localhost:8080
-
-#### Using Kubernetes (Production-like)
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/food-ordering-system.git
-   cd food-ordering-system
-   ```
-
-2. Start Minikube:
-   ```bash
-   minikube start
-   ```
-
-3. Use the automated deployment script:
-   ```bash
-   chmod +x build-and-deploy.sh
-   ./build-and-deploy.sh
-   ```
-
-4. Set up local hosts file:
-   ```bash
-   echo "$(minikube ip) food-ordering.local" | sudo tee -a /etc/hosts
-   ```
-
-5. Access the application:
-   - Frontend: http://food-ordering.local
-   - API Gateway: http://food-ordering.local/api
-
-## Service Endpoints
-
-### API Gateway
-- Base URL: `http://localhost:8080` or `http://food-ordering.local/api` (Kubernetes)
-
-### User Service
-- Base URL: `http://localhost:8081` (Direct access in development)
-- Authentication endpoints
-- User profile management
-
-### Restaurant Service
-- Base URL: `http://localhost:8082` (Direct access in development)
-- Restaurant management
-- Menu management
-
-### Order Service
-- Base URL: `http://localhost:8083` (Direct access in development)
-- Order creation and management
-
-### Payment Service
-- Base URL: `http://localhost:8084` (Direct access in development)
-- Payment processing
-
-### Delivery Service
-- Base URL: `http://localhost:8085` (Direct access in development)
-- Delivery tracking
-
-### Notification Service
-- Base URL: `http://localhost:8086` (Direct access in development)
-- Notification configuration and delivery
-
-## Database Setup
-
-The system uses PostgreSQL with separate databases for each microservice:
-- user_service_db
-- restaurant_service_db
-- order_service_db
-- payment_service_db
-- delivery_service_db
-- notification_service_db
-
-Initial database setup is handled automatically via:
-- `init-db.sql` for Docker Compose
-- ConfigMap in Kubernetes
-
-## Configuration
-
-### Environment Variables
-
-Key environment variables used in the application:
-
-```
-SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/[service_name]_db
-SPRING_DATASOURCE_USERNAME=postgres
-SPRING_DATASOURCE_PASSWORD=Charuka@0
-JWT_SECRET=[base64-encoded-secret]
+### **1. Clone the Repository**
+```bash
+git clone https://github.com/yourusername/food-ordering-system.git
+cd food-ordering-system
 ```
 
-### Kubernetes Configuration
+### **2. Database Setup**
+```bash
+# Create databases for each service
+createdb user_service_db
+createdb food_delivery_restaurant_db
+createdb order-service-DB
+createdb payment_service_db
+createdb delivery_service_db
+createdb notification_service_db
 
-All Kubernetes configuration files are located in the `kubernetes/` directory:
-- `namespace.yaml`: Creates food-ordering namespace
-- `configmap.yaml`: Common configuration values
-- `secrets.yaml`: Database credentials and JWT secret
-- `postgres-pv.yaml`: Persistent volume for PostgreSQL
-- `postgres-deployment.yaml`: PostgreSQL database deployment
-- `[service]-deployment.yaml`: Deployment files for each service
-- `ingress.yaml`: Ingress configuration for external access
+# Run initialization script
+psql -d user_service_db -f init-db.sql
+```
 
-## Security
+### **3. Start Infrastructure Services**
+```bash
+# Start Kafka, Zookeeper using Docker Compose
+docker-compose up -d kafka zookeeper postgres
+```
 
-The application implements several security measures:
-- JWT-based authentication
-- Secrets management via Kubernetes Secrets
-- Database credentials managed securely
-- HTTPS support (configure in production)
+### **4. Backend Services Setup**
 
-## Development
+#### **Start Service Registry (Required First)**
+```bash
+cd backend/service-registry
+./mvnw spring-boot:run
+```
 
-### Adding New Features
-1. Identify the microservice to modify
-2. Implement changes following the service's architecture
-3. Update tests
-4. Rebuild the Docker image
-5. Deploy using provided scripts
+#### **Start All Microservices**
+```bash
+# Terminal 1: API Gateway
+cd backend/api-gateway
+./mvnw spring-boot:run
 
-### Testing
-Each service contains unit tests and integration tests:
-- Use `./gradlew test` for each service
-- Frontend tests: `ng test`
+# Terminal 2: User Service
+cd backend/user-service  
+./mvnw spring-boot:run
 
-## Troubleshooting
+# Terminal 3: Restaurant Service
+cd backend/restaurant-service
+./mvnw spring-boot:run
 
-### Common Issues
+# Terminal 4: Order Service
+cd backend/order-service
+./mvnw spring-boot:run
 
-1. **Services can't connect to the database**
-   - Check if PostgreSQL is running
-   - Verify credentials in environment variables or secrets
+# Terminal 5: Payment Service
+cd backend/payment-service
+./mvnw spring-boot:run
 
-2. **Frontend can't connect to API Gateway**
-   - Ensure API Gateway is running
-   - Check CORS configuration
+# Terminal 6: Delivery Service
+cd backend/delivery-service
+./mvnw spring-boot:run
 
-3. **Kubernetes pods in CrashLoopBackOff**
-   - Check logs: `kubectl logs -n food-ordering [pod-name]`
-   - Verify secrets and configmaps are correctly applied
+# Terminal 7: Notification Service
+cd backend/notification-service
+./mvnw spring-boot:run
+```
 
-## Application UI
+### **5. Frontend Setup**
+```bash
+cd frontend
+npm install
+ng serve
+```
+
+### **6. Access the Application**
+- **Frontend:** http://localhost:4200
+- **API Gateway:** http://localhost:8080
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+
+## 📖 Documentation
+
+For detailed documentation including API specifications, deployment guides, and development workflows, visit our **[GitHub Wiki](https://github.com/dilrukshax/food-delivery-system/wiki)**.
+
+### **Quick Links:**
+- **[API Documentation](../../wiki/API-Documentation)** - Complete API reference with examples
+- **[Setup Guide](../../wiki/Setup-Guide)** - Detailed setup and configuration instructions
+- **[Architecture Guide](../../wiki/Architecture-Guide)** - System architecture and design decisions
+- **[Deployment Guide](../../wiki/Deployment-Guide)** - Production deployment strategies
+- **[Contributing Guide](../../wiki/Contributing-Guide)** - How to contribute to the project
+- **[Troubleshooting](../../wiki/Troubleshooting)** - Common issues and solutions
+
+## 🔧 Configuration
+
+### **Environment Variables**
+
+#### **Database Configuration**
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/{service}_db
+spring.datasource.username=postgres
+spring.datasource.password=your_password
+```
+
+#### **JWT Configuration**
+```properties
+jwt.secret=your-256-bit-secret-key
+jwt.expiration=86400000
+jwt.refresh-expiration=604800000
+```
+
+#### **Stripe Configuration**
+```properties
+stripe.api.key=sk_test_your_stripe_secret_key
+```
+
+#### **Azure Storage Configuration**
+```properties
+azure.storage.connection-string=your-azure-connection-string
+azure.storage.container-name=your-container-name
+```
+
+## 🚀 Deployment
+
+### **Docker Deployment**
+```bash
+# Build and run all services
+docker-compose up -d
+```
+
+### **Kubernetes Deployment**
+```bash
+# Deploy infrastructure
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/configmap.yaml
+kubectl apply -f kubernetes/secrets.yaml
+
+# Deploy all services
+kubectl apply -f kubernetes/
+```
+
+##  Application UI
 ![Home Page](images/UI.png)
-## Contributing
 
-1. Fork the repository
-2. Create a new branch: `git checkout -b feature/your-feature`
-3. Make changes and commit: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Submit a pull request
+##  Contributing
 
-## License
+We welcome contributions! To get started:
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+1. Fork the repo
+2. Create a new branch:
 
-## Acknowledgments
+   ```bash
+   git checkout -b feature/my-feature
+   ```
+3. Commit your changes:
 
-- The Spring Boot team for the excellent microservices framework
-- The Angular team for the frontend framework
-- The Kubernetes team for the container orchestration platform
+   ```bash
+   git commit -m "Add my feature"
+   ```
+4. Push to your fork:
+
+   ```bash
+   git push origin feature/my-feature
+   ```
+5. Open a Pull Request
+
+
+## 📬 Contact
+
+* **Author**: Dilan Dilruksha
+* **Email**: [dilandilruksha0@gmail.com](mailto:dilandilruksha0@gmail.com)
+
+
 
 
