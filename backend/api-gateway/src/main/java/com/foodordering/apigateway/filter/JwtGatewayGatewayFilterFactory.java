@@ -66,6 +66,7 @@ public class JwtGatewayGatewayFilterFactory extends AbstractGatewayFilterFactory
             } catch (Exception e) {
                 return onError(exchange, "Invalid token: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
             }
+            
         };
     }
 
