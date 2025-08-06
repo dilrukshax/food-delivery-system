@@ -107,10 +107,10 @@ public class JwtUtil {
 
     private Claims extractAllClaims(String token) {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
-        return Jwts.parser()                     // <— returns JwtParserBuilder
-                .setSigningKey(key)           // set your HMAC key
-                .build()                      // build the JwtParser
-                .parseClaimsJws(token)        // parse and verify
-                .getBody();
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

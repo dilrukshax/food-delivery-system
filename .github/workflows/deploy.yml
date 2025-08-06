@@ -1,0 +1,105 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      image_tag:
+        description: 'Image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+
+env:
+  AWS_REGION: us-west-2
+  EKS_CLUSTER_NAME: food-delivery-cluster
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kube config
+      run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Deploy services
+      env:
+        IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+        ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+      run: |
+        echo "Deploying to ${{ github.event.inputs.environment }} with image tag: ${{ github.event.inputs.image_tag }}"
+        
+        # Create namespace
+        kubectl create namespace food-delivery --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Create ECR secret
+        kubectl create secret docker-registry ecr-secret \
+          --docker-server=$ECR_REGISTRY \
+          --docker-username=AWS \
+          --docker-password=$(aws ecr get-login-password --region ${{ env.AWS_REGION }}) \
+          --namespace=food-delivery \
+          --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Update image tags in deployment files
+        for service in api-gateway user-service frontend; do
+          if [ -f "kubernetes/${service}/deployment.yaml" ]; then
+            sed -i "s|image: .*${service}:.*|image: $ECR_REGISTRY/${service}:$IMAGE_TAG|g" kubernetes/${service}/deployment.yaml
+          fi
+        done
+        
+        # Apply manifests
+        kubectl apply -f kubernetes/namespace.yaml || true
+        kubectl apply -f kubernetes/configmap.yaml || true
+        kubectl apply -f kubernetes/secrets.yaml || true
+        kubectl apply -f kubernetes/api-gateway/ || true
+        kubectl apply -f kubernetes/user-service/ || true
+        kubectl apply -f kubernetes/frontend/ || true
+        kubectl apply -f kubernetes/ingress.yaml || true
+
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/api-gateway -n food-delivery --timeout=600s || true
+        kubectl rollout status deployment/user-service -n food-delivery --timeout=600s || true
+        kubectl rollout status deployment/frontend -n food-delivery --timeout=600s || true
+
+    - name: Get deployment status
+      run: |
+        echo "=== Pod Status ==="
+        kubectl get pods -n food-delivery -o wide
+        echo ""
+        echo "=== Service Status ==="
+        kubectl get services -n food-delivery
+        echo ""
+        echo "=== Ingress Status ==="
+        kubectl get ingress -n food-delivery
+        echo ""
+        
+        # Get application URL
+        LB_URL=$(kubectl get ingress food-delivery-ingress -n food-delivery -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || echo "")
+        if [ -n "$LB_URL" ]; then
+          echo "🎉 Application URL: http://$LB_URL"
+        else
+          echo "⏳ Load balancer URL not ready yet"
+        fi

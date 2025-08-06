@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: food-delivery
+  labels:
+    name: food-delivery
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: food-delivery-sa
+  namespace: food-delivery
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::608542499398:role/food-delivery-service-role

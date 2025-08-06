@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: food-ordering
+  namespace: food-delivery
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: frontend
@@ -15,6 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image:  dilan922/frontend:latest
+          image: 608542499398.dkr.ecr.us-west-2.amazonaws.com/frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80

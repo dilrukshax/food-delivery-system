@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
-  namespace: food-ordering
+  namespace: food-delivery
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: api-gateway
@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: dilan922/api-gateway:latest
-          imagePullPolicy: IfNotPresent
+          image: 608542499398.dkr.ecr.us-west-2.amazonaws.com/api-gateway:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

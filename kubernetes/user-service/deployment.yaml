@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service
-  namespace: food-ordering
+  namespace: food-delivery
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: user-service
@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: user-service
-          image:  dilan922/user-service:latest
+          image: 608542499398.dkr.ecr.us-west-2.amazonaws.com/user-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           env:
