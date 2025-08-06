@@ -66,7 +66,7 @@ public class JwtGatewayGatewayFilterFactory extends AbstractGatewayFilterFactory
             } catch (Exception e) {
                 return onError(exchange, "Invalid token: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
             }
-            
+
         };
     }
 
@@ -85,11 +85,10 @@ public class JwtGatewayGatewayFilterFactory extends AbstractGatewayFilterFactory
 
     private Claims validateToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
-        // PARSE via parser(), not parserBuilder()
-        return Jwts.parser()                     // <— returns JwtParserBuilder
-                .setSigningKey(key)           // set your HMAC key
-                .build()                      // build the JwtParser
-                .parseClaimsJws(token)        // parse and verify
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
                 .getBody();
     }
 
