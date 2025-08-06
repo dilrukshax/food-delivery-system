@@ -54,7 +54,7 @@ jobs:
         ./mvnw package -DskipTests
 
     - name: Upload JAR artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.service }}-jar
         path: backend/${{ matrix.service }}/target/*.jar
@@ -90,7 +90,7 @@ jobs:
         npm run build --configuration=production
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-build
         path: frontend/dist/
@@ -111,14 +111,14 @@ jobs:
 
     - name: Download artifacts (backend services)
       if: matrix.service != 'frontend'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ matrix.service }}-jar
         path: backend/${{ matrix.service }}/target/
 
     - name: Download artifacts (frontend)
       if: matrix.service == 'frontend'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: frontend-build
         path: frontend/dist/
