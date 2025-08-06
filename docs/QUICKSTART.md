@@ -52,6 +52,8 @@ git push origin main
 - ✅ Application will be deployed to EKS
 - ✅ Access your app at the load balancer URL
 
+**Note:** Frontend tests are temporarily skipped in CI/CD to focus on deployment. See [Testing Fix Guide](TESTING-FIX-GUIDE.md) for details.
+
 ## 📱 Monitor Progress
 
 1. **GitHub Actions:** https://github.com/YOUR_USERNAME/food-delivery-system/actions
