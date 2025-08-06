@@ -39,6 +39,11 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
+    # Fix Maven wrapper permissions
+    - name: Make Maven wrapper executable
+      run: |
+        find . -name "mvnw" -type f -exec chmod +x {} \;
+
     # Backend Tests
     - name: Run Backend Tests
       run: |
