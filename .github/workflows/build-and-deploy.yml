@@ -1,0 +1,282 @@
+name: Build and Deploy Food Delivery System
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_RESOURCE_GROUP: rg-food-delivery-dev-44a42eo0
+  AKS_CLUSTER_NAME: aks-food-delivery-dev-44a42eo0
+  ACR_NAME: acrfooddeliverydev44a42eo0
+  NAMESPACE: food-ordering
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Run Backend Tests
+      run: |
+        # Test all backend services
+        cd backend/service-registry && chmod +x mvnw && ./mvnw test
+        cd ../api-gateway && chmod +x mvnw && ./mvnw test
+        cd ../user-service && chmod +x mvnw && ./mvnw test
+        cd ../restaurant-service && chmod +x mvnw && ./mvnw test
+        cd ../order-service && chmod +x mvnw && ./mvnw test
+        cd ../payment-service && chmod +x mvnw && ./mvnw test
+        cd ../delivery-service && chmod +x mvnw && ./mvnw test
+        cd ../notification-service && chmod +x mvnw && ./mvnw test
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Run Frontend Tests
+      run: |
+        cd frontend
+        npm run test:ci
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm run build
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build-and-deploy:
+    name: Build and Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Azure Container Registry
+      run: |
+        az acr login --name ${{ env.ACR_NAME }}
+
+    - name: Build and Push Service Registry
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/service-registry:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/service-registry:latest \
+                     ./backend/service-registry
+        docker push ${{ env.ACR_NAME }}.azurecr.io/service-registry:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/service-registry:latest
+
+    - name: Build and Push API Gateway
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/api-gateway:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/api-gateway:latest \
+                     ./backend/api-gateway
+        docker push ${{ env.ACR_NAME }}.azurecr.io/api-gateway:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/api-gateway:latest
+
+    - name: Build and Push User Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/user-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/user-service:latest \
+                     ./backend/user-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/user-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/user-service:latest
+
+    - name: Build and Push Restaurant Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/restaurant-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/restaurant-service:latest \
+                     ./backend/restaurant-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/restaurant-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/restaurant-service:latest
+
+    - name: Build and Push Order Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/order-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/order-service:latest \
+                     ./backend/order-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/order-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/order-service:latest
+
+    - name: Build and Push Payment Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/payment-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/payment-service:latest \
+                     ./backend/payment-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/payment-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/payment-service:latest
+
+    - name: Build and Push Delivery Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/delivery-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/delivery-service:latest \
+                     ./backend/delivery-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/delivery-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/delivery-service:latest
+
+    - name: Build and Push Notification Service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/notification-service:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/notification-service:latest \
+                     ./backend/notification-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/notification-service:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/notification-service:latest
+
+    - name: Build and Push Frontend
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/frontend:${{ github.sha }} \
+                     -t ${{ env.ACR_NAME }}.azurecr.io/frontend:latest \
+                     ./frontend
+        docker push ${{ env.ACR_NAME }}.azurecr.io/frontend:${{ github.sha }}
+        docker push ${{ env.ACR_NAME }}.azurecr.io/frontend:latest
+
+    - name: Get AKS Credentials
+      run: |
+        az aks get-credentials --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER_NAME }}
+
+    - name: Update Kubernetes Manifests with New Images
+      run: |
+        # Update deployment images to use the latest commit SHA
+        sed -i "s|image: .*service-registry.*|image: ${{ env.ACR_NAME }}.azurecr.io/service-registry:${{ github.sha }}|g" kubernetes/service-registry/deployment.yaml || true
+        sed -i "s|image: .*api-gateway.*|image: ${{ env.ACR_NAME }}.azurecr.io/api-gateway:${{ github.sha }}|g" kubernetes/api-gateway/deployment.yaml
+        sed -i "s|image: .*user-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/user-service:${{ github.sha }}|g" kubernetes/user-service/deployment.yaml
+        sed -i "s|image: .*restaurant-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/restaurant-service:${{ github.sha }}|g" kubernetes/restaurant-service/deployment.yaml
+        sed -i "s|image: .*order-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/order-service:${{ github.sha }}|g" kubernetes/order-service/deployment.yaml
+        sed -i "s|image: .*payment-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/payment-service:${{ github.sha }}|g" kubernetes/payment-service/deployment.yaml
+        sed -i "s|image: .*delivery-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/delivery-service:${{ github.sha }}|g" kubernetes/delivery-service/deployment.yaml
+        sed -i "s|image: .*notification-service.*|image: ${{ env.ACR_NAME }}.azurecr.io/notification-service:${{ github.sha }}|g" kubernetes/notification-service/deployment.yaml
+        sed -i "s|image: .*frontend.*|image: ${{ env.ACR_NAME }}.azurecr.io/frontend:${{ github.sha }}|g" kubernetes/frontend/deployment.yaml
+
+    - name: Deploy Infrastructure Components
+      run: |
+        kubectl apply -f kubernetes/namespace.yaml
+        kubectl apply -f kubernetes/secrets.yaml
+        kubectl apply -f kubernetes/configmap.yaml || echo "ConfigMap not found, skipping"
+        kubectl apply -f kubernetes/postgres/ || echo "PostgreSQL components deployment failed, continuing"
+
+    - name: Deploy Microservices
+      run: |
+        # Deploy all microservices
+        kubectl apply -f kubernetes/service-registry/ || echo "Service registry deployment failed, continuing"
+        kubectl apply -f kubernetes/api-gateway/
+        kubectl apply -f kubernetes/user-service/
+        kubectl apply -f kubernetes/restaurant-service/
+        kubectl apply -f kubernetes/order-service/
+        kubectl apply -f kubernetes/payment-service/
+        kubectl apply -f kubernetes/delivery-service/
+        kubectl apply -f kubernetes/notification-service/
+        kubectl apply -f kubernetes/frontend/
+
+    - name: Deploy Ingress
+      run: |
+        kubectl apply -f kubernetes/ingress.yaml || echo "Ingress deployment failed, continuing"
+
+    - name: Wait for Deployments
+      run: |
+        echo "Waiting for deployments to be ready..."
+        kubectl wait --for=condition=available --timeout=300s deployment/api-gateway -n ${{ env.NAMESPACE }}
+        kubectl wait --for=condition=available --timeout=300s deployment/user-service -n ${{ env.NAMESPACE }}
+        kubectl wait --for=condition=available --timeout=300s deployment/restaurant-service -n ${{ env.NAMESPACE }}
+        kubectl wait --for=condition=available --timeout=300s deployment/order-service -n ${{ env.NAMESPACE }}
+
+    - name: Get Service URLs
+      run: |
+        echo "🌐 Application URLs:"
+        echo "===================="
+        kubectl get services -n ${{ env.NAMESPACE }} -o wide
+        echo ""
+        echo "External IPs:"
+        kubectl get services -n ${{ env.NAMESPACE }} --field-selector spec.type=LoadBalancer -o jsonpath='{range .items[*]}{.metadata.name}{": http://"}{.status.loadBalancer.ingress[0].ip}{":"}{.spec.ports[0].port}{"\n"}{end}'
+
+    - name: Health Check
+      run: |
+        echo "🔍 Health Check Results:"
+        echo "======================="
+        # Wait a bit for services to be ready
+        sleep 30
+        
+        # Get external IP of API Gateway
+        API_GATEWAY_IP=$(kubectl get service api-gateway-external -n ${{ env.NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        
+        if [ ! -z "$API_GATEWAY_IP" ]; then
+          echo "API Gateway Health: http://$API_GATEWAY_IP:8080/actuator/health"
+          curl -f "http://$API_GATEWAY_IP:8080/actuator/health" || echo "Health check failed"
+        else
+          echo "API Gateway external IP not ready yet"
+        fi
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    if: always()
+    
+    steps:
+    - name: Deployment Success
+      if: needs.build-and-deploy.result == 'success'
+      run: |
+        echo "🎉 Deployment Successful!"
+        echo "Your Food Delivery System has been successfully deployed to Azure!"
+        
+    - name: Deployment Failed
+      if: needs.build-and-deploy.result == 'failure'
+      run: |
+        echo "❌ Deployment Failed"
+        echo "Please check the logs for details."
+        exit 1
