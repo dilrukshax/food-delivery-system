@@ -21,14 +21,19 @@ echo "Tenant ID: $TENANT_ID"
 
 ### Step 2: Create a Modified AZURE_CREDENTIALS Secret
 
-Use this JSON for your `AZURE_CREDENTIALS` GitHub secret:
+⚠️ **IMPORTANT**: The `clientSecret: "STUDENT_ACCOUNT_WORKAROUND"` approach won't work for GitHub Actions. 
 
+**For Student Accounts, use Option 2 (GitHub Codespaces) instead!** 
+
+If you want to try GitHub Actions anyway, you'll need to modify the workflow to use device code authentication, but this requires manual intervention during each deployment.
+
+**Recommended JSON for testing (but expect authentication issues):**
 ```json
 {
   "clientId": "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
   "clientSecret": "STUDENT_ACCOUNT_WORKAROUND", 
   "subscriptionId": "ecf458ab-452d-4a8f-8f6c-dc10cd6fe4d5",
-  "tenantId": "YOUR_TENANT_ID_FROM_STEP_1",
+  "tenantId": "44e3cf94-19c9-4e32-96c3-14f5bf01391a",
   "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
   "resourceManagerEndpointUrl": "https://management.azure.com/",
   "activeDirectoryGraphResourceId": "https://graph.windows.net/",
@@ -37,8 +42,6 @@ Use this JSON for your `AZURE_CREDENTIALS` GitHub secret:
   "managementEndpointUrl": "https://management.core.windows.net/"
 }
 ```
-
-**Replace `YOUR_TENANT_ID_FROM_STEP_1` with the actual tenant ID from Step 1!**
 
 ### Step 3: Continue with the Portal Guide
 
