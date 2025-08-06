@@ -13,13 +13,13 @@ variable "location" {
 variable "node_count" {
   description = "Number of nodes in the AKS cluster"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "vm_size" {
   description = "Size of the AKS nodes"
   type        = string
-  default     = "Standard_D2s_v3"
+  default     = "Standard_B2s"
 }
 
 variable "postgres_admin_username" {

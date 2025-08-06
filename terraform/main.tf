@@ -9,10 +9,6 @@ terraform {
       version = "~>3.1"
     }
   }
-  
-  backend "azurerm" {
-    # Backend configuration will be provided via CLI or environment variables
-  }
 }
 
 provider "azurerm" {
@@ -142,6 +138,8 @@ resource "azurerm_kubernetes_cluster" "main" {
   network_profile {
     network_plugin = "azure"
     network_policy = "azure"
+    service_cidr   = "10.2.0.0/16"
+    dns_service_ip = "10.2.0.10"
   }
 
   oms_agent {
@@ -161,15 +159,16 @@ resource "azurerm_role_assignment" "aks_acr_pull" {
 
 # PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = "psql-food-delivery-${var.environment}-${random_string.suffix.result}"
-  resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
-  version                = "15"
-  delegated_subnet_id    = azurerm_subnet.postgres.id
-  private_dns_zone_id    = azurerm_private_dns_zone.postgres.id
-  administrator_login    = var.postgres_admin_username
-  administrator_password = var.postgres_admin_password
-  zone                   = "1"
+  name                          = "psql-food-delivery-${var.environment}-${random_string.suffix.result}"
+  resource_group_name           = azurerm_resource_group.main.name
+  location                      = azurerm_resource_group.main.location
+  version                       = "15"
+  delegated_subnet_id           = azurerm_subnet.postgres.id
+  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
+  public_network_access_enabled = false
+  administrator_login           = var.postgres_admin_username
+  administrator_password        = var.postgres_admin_password
+  zone                          = "1"
 
   storage_mb = 32768
 
