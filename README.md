@@ -1,5 +1,7 @@
 # 🍽️ Food Ordering and Delivery System
 
+🚀 **Status: Ready for Azure deployment!**
+
 This is a **microservices-based food ordering and delivery system** designed to provide a scalable, modular, and secure platform for ordering meals, managing restaurants, handling payments, and tracking deliveries in real time.
 
 <div align="center">
