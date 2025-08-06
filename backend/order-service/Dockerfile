@@ -6,6 +6,9 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY src src
 
+# Make mvnw executable
+RUN chmod +x ./mvnw
+
 RUN ./mvnw package -DskipTests
 
 FROM eclipse-temurin:17-jre
