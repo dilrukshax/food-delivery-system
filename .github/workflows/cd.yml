@@ -1,0 +1,218 @@
+name: CD - Deploy to AKS
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Push to ACR"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+
+env:
+  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_TAG: ${{ github.sha }}
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+
+jobs:
+  deploy-infrastructure:
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Deploy Infrastructure
+    outputs:
+      aks-cluster-name: ${{ steps.terraform.outputs.aks-cluster-name }}
+      resource-group-name: ${{ steps.terraform.outputs.resource-group-name }}
+      postgres-fqdn: ${{ steps.terraform.outputs.postgres-fqdn }}
+      acr-name: ${{ steps.terraform.outputs.acr-name }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+        terraform_wrapper: false
+
+    - name: Terraform Init
+      working-directory: ./terraform
+      run: |
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.TERRAFORM_STATE_RG }}" \
+          -backend-config="storage_account_name=${{ secrets.TERRAFORM_STATE_SA }}" \
+          -backend-config="container_name=${{ secrets.TERRAFORM_STATE_CONTAINER }}" \
+          -backend-config="key=food-delivery-${{ env.ENVIRONMENT }}.tfstate"
+
+    - name: Terraform Plan
+      working-directory: ./terraform
+      run: |
+        terraform plan \
+          -var="environment=${{ env.ENVIRONMENT }}" \
+          -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+          -out=tfplan
+
+    - name: Terraform Apply
+      working-directory: ./terraform
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get Terraform Outputs
+      id: terraform
+      working-directory: ./terraform
+      run: |
+        echo "aks-cluster-name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+        echo "resource-group-name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+        echo "postgres-fqdn=$(terraform output -raw postgres_fqdn)" >> $GITHUB_OUTPUT
+        echo "acr-name=$(terraform output -raw acr_name)" >> $GITHUB_OUTPUT
+
+  deploy-applications:
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    name: Deploy Applications to AKS
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Get AKS credentials
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ needs.deploy-infrastructure.outputs.resource-group-name }} \
+          --name ${{ needs.deploy-infrastructure.outputs.aks-cluster-name }} \
+          --overwrite-existing
+
+    - name: Create namespace and apply base configuration
+      run: |
+        kubectl apply -f k8s/00-namespace-config.yaml
+
+    - name: Update secrets with actual values
+      run: |
+        # Encode the database password
+        DB_PASSWORD_B64=$(echo -n "${{ secrets.POSTGRES_ADMIN_PASSWORD }}" | base64 -w 0)
+        
+        # Update the secret with actual values
+        kubectl patch secret app-secrets -n food-delivery -p='{"data":{"SPRING_DATASOURCE_PASSWORD":"'$DB_PASSWORD_B64'"}}'
+
+    - name: Replace placeholders in Kubernetes manifests
+      run: |
+        # Replace ACR name and image tags in all service manifests
+        for file in k8s/*.yaml; do
+          if [ "$file" != "k8s/00-namespace-config.yaml" ]; then
+            sed -i "s/ACR_NAME/${{ needs.deploy-infrastructure.outputs.acr-name }}/g" "$file"
+            sed -i "s/TAG/${{ env.IMAGE_TAG }}/g" "$file"
+            sed -i "s/POSTGRES_FQDN/${{ needs.deploy-infrastructure.outputs.postgres-fqdn }}/g" "$file"
+          fi
+        done
+
+    - name: Deploy services in order
+      run: |
+        # Deploy service registry first
+        kubectl apply -f k8s/01-service-registry.yaml
+        kubectl rollout status deployment/service-registry -n food-delivery --timeout=300s
+        
+        # Wait a bit for service registry to be fully ready
+        sleep 30
+        
+        # Deploy backend services
+        for service in 02-api-gateway 03-user-service 04-restaurant-service 05-order-service 06-payment-service 07-delivery-service 08-notification-service; do
+          echo "Deploying $service..."
+          kubectl apply -f k8s/$service.yaml
+          
+          # Extract service name from filename
+          service_name=$(echo $service | cut -d'-' -f2- | sed 's/\.yaml//')
+          kubectl rollout status deployment/$service_name -n food-delivery --timeout=300s
+          
+          # Wait between deployments to avoid overwhelming the cluster
+          sleep 15
+        done
+        
+        # Deploy frontend last
+        kubectl apply -f k8s/09-frontend.yaml
+        kubectl rollout status deployment/frontend -n food-delivery --timeout=300s
+
+    - name: Verify deployment
+      run: |
+        echo "Checking pod status..."
+        kubectl get pods -n food-delivery
+        
+        echo "Checking services..."
+        kubectl get services -n food-delivery
+        
+        echo "Getting external IPs..."
+        kubectl get services -n food-delivery -o wide
+
+    - name: Run smoke tests
+      run: |
+        # Wait for LoadBalancer IP to be assigned
+        echo "Waiting for LoadBalancer IPs..."
+        kubectl wait --for=condition=Ready service/api-gateway -n food-delivery --timeout=300s
+        kubectl wait --for=condition=Ready service/frontend -n food-delivery --timeout=300s
+        
+        # Get external IPs
+        API_GATEWAY_IP=$(kubectl get service api-gateway -n food-delivery -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        FRONTEND_IP=$(kubectl get service frontend -n food-delivery -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        
+        echo "API Gateway IP: $API_GATEWAY_IP"
+        echo "Frontend IP: $FRONTEND_IP"
+        
+        # Basic health checks (retry logic)
+        for i in {1..10}; do
+          if curl -f "http://$API_GATEWAY_IP:8080/actuator/health" > /dev/null 2>&1; then
+            echo "API Gateway health check passed"
+            break
+          fi
+          echo "API Gateway health check failed, retrying in 30s..."
+          sleep 30
+        done
+        
+        for i in {1..10}; do
+          if curl -f "http://$FRONTEND_IP/" > /dev/null 2>&1; then
+            echo "Frontend health check passed"
+            break
+          fi
+          echo "Frontend health check failed, retrying in 30s..."
+          sleep 30
+        done
+
+  notify-deployment:
+    needs: [deploy-infrastructure, deploy-applications]
+    runs-on: ubuntu-latest
+    name: Notify Deployment Status
+    if: always()
+
+    steps:
+    - name: Notify Success
+      if: needs.deploy-applications.result == 'success'
+      run: |
+        echo "🎉 Deployment to ${{ env.ENVIRONMENT }} environment completed successfully!"
+        echo "Infrastructure: ✅"
+        echo "Applications: ✅"
+
+    - name: Notify Failure
+      if: needs.deploy-applications.result == 'failure' || needs.deploy-infrastructure.result == 'failure'
+      run: |
+        echo "❌ Deployment to ${{ env.ENVIRONMENT }} environment failed!"
+        echo "Please check the logs for more details."
