@@ -1,6 +1,5 @@
 package com.foodordering.userservice.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -29,13 +28,16 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     @Autowired
     @Qualifier("customUserDetailsService") // Specify which implementation to use
     private UserDetailsService userDetailsService;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+        this.jwtAuthFilter = jwtAuthFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

@@ -8,8 +8,8 @@ import com.foodordering.userservice.entity.User;
 import com.foodordering.userservice.repository.AuthTokenRepository;
 import com.foodordering.userservice.repository.UserRepository;
 import com.foodordering.userservice.util.JwtUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,14 +21,24 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+    
     private final UserRepository userRepository;
     private final AuthTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+
+    public AuthService(UserRepository userRepository, AuthTokenRepository tokenRepository, 
+                      PasswordEncoder passwordEncoder, JwtUtils jwtUtils, 
+                      AuthenticationManager authenticationManager) {
+        this.userRepository = userRepository;
+        this.tokenRepository = tokenRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
+        this.authenticationManager = authenticationManager;
+    }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {

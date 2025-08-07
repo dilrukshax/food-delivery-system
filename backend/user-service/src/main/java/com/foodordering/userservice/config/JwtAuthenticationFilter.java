@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.NonNull;
@@ -20,13 +19,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     @Autowired
     @Qualifier("customUserDetailsService") // Specify which implementation to use
     private UserDetailsService userDetailsService;
+
+    public JwtAuthenticationFilter(JwtUtils jwtUtils) {
+        this.jwtUtils = jwtUtils;
+    }
 
     @Override
     protected void doFilterInternal(
