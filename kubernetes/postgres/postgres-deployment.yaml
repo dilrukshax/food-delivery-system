@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: food-ordering
+  namespace: food-delivery
 spec:
   replicas: 1
   selector:
@@ -38,8 +38,7 @@ spec:
               mountPath: /docker-entrypoint-initdb.d
       volumes:
         - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+          emptyDir: {}
         - name: init-script
           configMap:
             name: postgres-initdb-config
