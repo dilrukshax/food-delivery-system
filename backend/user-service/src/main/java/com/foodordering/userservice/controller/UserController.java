@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -151,6 +152,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(address));
     }
 
-
+    // Admin endpoint to create user
+    @PostMapping("/admin/create")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> createUserByAdmin(
+            @Valid @RequestBody AdminCreateUserRequest request) {
+        
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String adminEmail = authentication.getName();
+        
+        UserProfileResponse user = userService.createUserByAdmin(request, adminEmail);
+        return ResponseEntity.ok(ApiResponse.success("User created successfully", user));
+    }
 
 }

@@ -31,4 +31,14 @@ export class AdminService {
   updateUser(email: string, userData: any): Observable<any> {
     return this.http.put(`${this.apiUrl}/${email}`, userData);
   }
+
+  // Create user by admin
+  createUser(userData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/admin/create`, userData);
+  }
+
+  // Delete user by admin
+  deleteUser(userId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${userId}`);
+  }
 }

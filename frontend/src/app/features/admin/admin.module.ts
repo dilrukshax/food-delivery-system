@@ -8,6 +8,7 @@ import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.compo
 import { UserListComponent } from './user-list/user-list.component';
 import { UserDetailsComponent } from './user-details/user-details.component';
 import { UserEditComponent } from './user-edit/user-edit.component';
+import { AddUserComponent } from './add-user/add-user.component';
 
 @NgModule({
   imports: [
@@ -17,7 +18,8 @@ import { UserEditComponent } from './user-edit/user-edit.component';
     AdminDashboardComponent,
     UserListComponent,
     UserDetailsComponent,
-    UserEditComponent
+    UserEditComponent,
+    AddUserComponent
   ]
 })
 export class AdminModule { }

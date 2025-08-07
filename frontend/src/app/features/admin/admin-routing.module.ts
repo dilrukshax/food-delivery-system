@@ -5,6 +5,7 @@ import { adminGuard } from '../../core/guards/admin.guard';
 import { UserListComponent } from './user-list/user-list.component';
 import { UserDetailsComponent } from './user-details/user-details.component';
 import { UserEditComponent } from './user-edit/user-edit.component';
+import { AddUserComponent } from './add-user/add-user.component';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
 
 const routes: Routes = [
@@ -15,6 +16,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'users', pathMatch: 'full' },
       { path: 'users', component: UserListComponent },
+      { path: 'users/add', component: AddUserComponent },
       { path: 'users/:id', component: UserDetailsComponent },
       { path: 'users/:id/edit', component: UserEditComponent }
     ]

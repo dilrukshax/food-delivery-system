@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
     private final AzureStorageService azureStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public PagedResponse<UserProfileResponse> getAllUsers(int page, int size, String sortBy, String direction) {
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
@@ -314,6 +316,51 @@ public class UserService {
                 .collect(Collectors.toList());
 
         return users;
+    }
+
+    // Admin method to create user
+    @Transactional
+    public UserProfileResponse createUserByAdmin(AdminCreateUserRequest request, String adminEmail) {
+        // Verify admin permissions
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
+        
+        if (!"SYSTEM_ADMIN".equals(admin.getRole())) {
+            throw new AccessDeniedException("Only system administrators can create users");
+        }
+
+        // Check if email already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        // Validate role
+        if (!isValidRole(request.getRole())) {
+            throw new RuntimeException("Invalid role specified");
+        }
+
+        // Create user
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .city(request.getCity())
+                .role(request.getRole())
+                .isActive(true)
+                .build();
+
+        userRepository.save(user);
+
+        return mapToUserProfileResponse(user);
+    }
+
+    private boolean isValidRole(String role) {
+        return "CUSTOMER".equals(role) || 
+               "RESTAURANT_ADMIN".equals(role) || 
+               "DELIVERY_DRIVER".equals(role) || 
+               "SYSTEM_ADMIN".equals(role);
     }
 
 }
