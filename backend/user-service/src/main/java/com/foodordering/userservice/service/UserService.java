@@ -5,7 +5,7 @@ import com.foodordering.userservice.entity.User;
 import com.foodordering.userservice.entity.UserAddress;
 import com.foodordering.userservice.repository.UserAddressRepository;
 import com.foodordering.userservice.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,12 +22,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final UserAddressRepository userAddressRepository;
     private final AzureStorageService azureStorageService;
     private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public UserService(UserRepository userRepository, UserAddressRepository userAddressRepository, 
+                      AzureStorageService azureStorageService, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.userAddressRepository = userAddressRepository;
+        this.azureStorageService = azureStorageService;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public PagedResponse<UserProfileResponse> getAllUsers(int page, int size, String sortBy, String direction) {
         Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
@@ -361,6 +369,79 @@ public class UserService {
                "RESTAURANT_ADMIN".equals(role) || 
                "DELIVERY_DRIVER".equals(role) || 
                "SYSTEM_ADMIN".equals(role);
+    }
+
+    // Additional admin methods for AdminController
+    public User createUserByAdmin(CreateUserRequest request) {
+        // Check if email already exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+
+        // Validate role
+        if (!isValidRole(request.getRole())) {
+            throw new RuntimeException("Invalid role specified");
+        }
+
+        // Create user
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .city(request.getCity())
+                .role(request.getRole())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .build();
+
+        return userRepository.save(user);
+    }
+
+    public Page<User> getAllUsersForAdmin(Pageable pageable, String search, String role, Boolean isActive) {
+        if (search != null && !search.trim().isEmpty()) {
+            if (role != null && isActive != null) {
+                return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseAndRoleAndIsActive(
+                        search, search, search, role, isActive, pageable);
+            } else if (role != null) {
+                return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseAndRole(
+                        search, search, search, role, pageable);
+            } else if (isActive != null) {
+                return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCaseAndIsActive(
+                        search, search, search, isActive, pageable);
+            } else {
+                return userRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        search, search, search, pageable);
+            }
+        } else {
+            if (role != null && isActive != null) {
+                return userRepository.findByRoleAndIsActive(role, isActive, pageable);
+            } else if (role != null) {
+                return userRepository.findByRole(role, pageable);
+            } else if (isActive != null) {
+                return userRepository.findByIsActive(isActive, pageable);
+            } else {
+                return userRepository.findAll(pageable);
+            }
+        }
+    }
+
+    public AdminStatsResponse getAdminStats() {
+        long totalUsers = userRepository.count();
+        long totalRestaurantOwners = userRepository.countByRole("RESTAURANT_ADMIN");
+        long totalCustomers = userRepository.countByRole("CUSTOMER");
+        long totalDeliveryDrivers = userRepository.countByRole("DELIVERY_DRIVER");
+        long activeUsers = userRepository.countByIsActive(true);
+        long inactiveUsers = userRepository.countByIsActive(false);
+
+        return AdminStatsResponse.builder()
+                .totalUsers(totalUsers)
+                .totalRestaurantOwners(totalRestaurantOwners)
+                .totalCustomers(totalCustomers)
+                .totalDeliveryDrivers(totalDeliveryDrivers)
+                .activeUsers(activeUsers)
+                .inactiveUsers(inactiveUsers)
+                .build();
     }
 
 }

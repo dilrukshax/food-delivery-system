@@ -2,36 +2,37 @@ package com.foodordering.userservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 
-public class AdminCreateUserRequest {
+public class CreateUserRequest {
+    
     @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
-
+    
     @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
-
+    
     @NotBlank(message = "Email is required")
-    @Email(message = "Please provide a valid email address")
+    @Email(message = "Email should be valid")
     private String email;
-
+    
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
-
+    
     private String phone;
+    
     private String city;
-
-    @NotBlank(message = "Role is required")
+    
+    @NotNull(message = "Role is required")
     private String role;
+    
+    private Boolean isActive = true;
 
     // Constructors
-    public AdminCreateUserRequest() {}
+    public CreateUserRequest() {}
 
-    public AdminCreateUserRequest(String firstName, String lastName, String email, String password, 
-                                String phone, String city, String role) {
+    public CreateUserRequest(String firstName, String lastName, String email, String password, 
+                           String phone, String city, String role, Boolean isActive) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -39,6 +40,7 @@ public class AdminCreateUserRequest {
         this.phone = phone;
         this.city = city;
         this.role = role;
+        this.isActive = isActive;
     }
 
     // Getters and Setters
@@ -62,4 +64,7 @@ public class AdminCreateUserRequest {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }

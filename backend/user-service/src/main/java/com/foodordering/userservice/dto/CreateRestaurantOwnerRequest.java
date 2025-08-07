@@ -2,43 +2,43 @@ package com.foodordering.userservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
-public class AdminCreateUserRequest {
+public class CreateRestaurantOwnerRequest {
+    
     @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
-
+    
     @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
-
+    
     @NotBlank(message = "Email is required")
-    @Email(message = "Please provide a valid email address")
+    @Email(message = "Email should be valid")
     private String email;
-
+    
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
-
+    
     private String phone;
+    
     private String city;
-
-    @NotBlank(message = "Role is required")
-    private String role;
+    
+    private String restaurantName;
+    
+    private String restaurantAddress;
 
     // Constructors
-    public AdminCreateUserRequest() {}
+    public CreateRestaurantOwnerRequest() {}
 
-    public AdminCreateUserRequest(String firstName, String lastName, String email, String password, 
-                                String phone, String city, String role) {
+    public CreateRestaurantOwnerRequest(String firstName, String lastName, String email, String password, 
+                                      String phone, String city, String restaurantName, String restaurantAddress) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
         this.phone = phone;
         this.city = city;
-        this.role = role;
+        this.restaurantName = restaurantName;
+        this.restaurantAddress = restaurantAddress;
     }
 
     // Getters and Setters
@@ -60,6 +60,9 @@ public class AdminCreateUserRequest {
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public String getRestaurantName() { return restaurantName; }
+    public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
+
+    public String getRestaurantAddress() { return restaurantAddress; }
+    public void setRestaurantAddress(String restaurantAddress) { this.restaurantAddress = restaurantAddress; }
 }
