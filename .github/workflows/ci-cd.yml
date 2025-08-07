@@ -209,6 +209,9 @@ jobs:
         kubectl apply -f kubernetes/configmap.yaml || true
         kubectl apply -f kubernetes/secrets.yaml || true
         
+        # Deploy PostgreSQL first
+        kubectl apply -f kubernetes/postgres/ || echo "PostgreSQL deployment not found"
+        
         # Deploy services that exist
         kubectl apply -f kubernetes/api-gateway/ || echo "api-gateway deployment not found"
         kubectl apply -f kubernetes/user-service/ || echo "user-service deployment not found"
@@ -217,10 +220,26 @@ jobs:
 
     - name: Wait for deployments
       run: |
-        # Wait for deployments to be ready
+        # Wait for PostgreSQL to be ready first
+        kubectl rollout status deployment/postgres -n food-delivery --timeout=300s || true
+        
+        # Wait for other deployments to be ready
         kubectl rollout status deployment/api-gateway -n food-delivery --timeout=300s || true
         kubectl rollout status deployment/user-service -n food-delivery --timeout=300s || true
         kubectl rollout status deployment/frontend -n food-delivery --timeout=300s || true
+
+    - name: Create Admin User
+      run: |
+        echo "Creating admin user..."
+        # Apply the admin setup job
+        kubectl apply -f kubernetes/admin-setup-job.yaml || echo "Admin setup job not found"
+        
+        # Wait for the job to complete
+        kubectl wait --for=condition=complete job/create-admin-user -n food-delivery --timeout=120s || echo "Admin setup job timeout"
+        
+        # Check job status
+        kubectl describe job create-admin-user -n food-delivery || true
+        kubectl logs job/create-admin-user -n food-delivery || true
 
     - name: Get application URL and status
       run: |

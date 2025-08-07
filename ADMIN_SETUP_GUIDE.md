@@ -10,6 +10,7 @@ The admin functionality has been successfully implemented with the following fea
 
 ## 🔧 Technical Resolution
 ✅ **Fixed Lombok Compatibility Issues**: Removed Lombok dependency and implemented manual getters/setters to resolve Java 24 compatibility problems.
+✅ **Fixed Java Version Compatibility**: Updated Maven configuration to use Java 17 for CI/CD pipeline compatibility.
 ✅ **Backend API**: Complete admin endpoints in `AdminController`
 ✅ **Frontend Interface**: Angular admin dashboard and forms
 ✅ **Database Integration**: Enhanced UserRepository with admin query methods
@@ -90,8 +91,29 @@ VALUES (
 
 ## 🚀 Getting Started
 
+### Prerequisites
+- **Java Version**: JDK 17 (required for CI/CD compatibility)
+- **Database**: PostgreSQL
+- **Frontend**: Node.js 20+
+
+### Java Version Setup
+If you have multiple Java versions installed, ensure you're using JDK 17:
+
+**Windows PowerShell:**
+```powershell
+# Set Java 17 for current session
+$env:JAVA_HOME="C:\Program Files\Java\jdk-17"
+$env:PATH="C:\Program Files\Java\jdk-17\bin;$env:PATH"
+java -version  # Should show Java 17
+```
+
+**Permanent Setup (Optional):**
+- Set `JAVA_HOME` environment variable to `C:\Program Files\Java\jdk-17`
+- Add `%JAVA_HOME%\bin` to your PATH
+
 1. **Start the Backend**:
    ```bash
+   # Make sure you're using Java 17
    cd backend/user-service
    ./mvnw spring-boot:run
    ```
