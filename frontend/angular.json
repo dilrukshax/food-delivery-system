@@ -91,6 +91,7 @@
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
+            "karmaConfig": "karma.conf.js",
             "assets": [
               {
                 "glob": "**/*",
@@ -103,6 +104,14 @@
               "node_modules/slick-carousel/slick/slick-theme.css"
             ],
             "scripts": []
+          },
+          "configurations": {
+            "ci": {
+              "watch": false,
+              "progress": false,
+              "browsers": "ChromeHeadlessCI",
+              "codeCoverage": true
+            }
           }
         }
       }

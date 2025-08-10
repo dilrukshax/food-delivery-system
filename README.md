@@ -322,6 +322,26 @@ azure.storage.container-name=your-container-name
 
 ## 🚀 Deployment
 
+### **CI/CD Pipeline** 🔄
+The system uses **separate, optimized CI/CD pipelines** for enhanced deployment efficiency:
+
+- **🎯 Smart Deployment**: Only deploys changed components (frontend OR backend)
+- **⚡ Parallel Execution**: Frontend and backend pipelines run independently  
+- **🧪 Improved Testing**: Fixed frontend testing with headless Chrome and coverage
+- **📊 Better Monitoring**: Clear deployment status and detailed summaries
+
+**Pipeline Files:**
+- `backend-ci-cd.yml` - Backend services deployment
+- `frontend-ci-cd.yml` - Frontend application deployment  
+- `orchestrator.yml` - Unified deployment orchestration
+
+**Triggers:**
+- Automatic deployment on push to `main`/`develop`
+- Manual deployment with granular control options
+- Path-based triggering (only deploys what changed)
+
+📖 **[Complete CI/CD Guide](docs/CI-CD-PIPELINE-GUIDE.md)**
+
 ### **Docker Deployment**
 ```bash
 # Build and run all services

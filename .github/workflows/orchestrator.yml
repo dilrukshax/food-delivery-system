@@ -1,0 +1,111 @@
+name: Full Stack CI/CD Orchestrator
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggers
+    inputs:
+      deploy_backend:
+        description: 'Force deploy backend services'
+        required: false
+        default: false
+        type: boolean
+      deploy_frontend:
+        description: 'Force deploy frontend'
+        required: false
+        default: false
+        type: boolean
+      deploy_all:
+        description: 'Force deploy everything'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  # Orchestrate the deployment of both backend and frontend
+  orchestrate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Analyze changes
+      id: analyze
+      run: |
+        echo "🔍 Analyzing changes to determine deployment strategy..."
+        
+        # Get changed files
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+        else
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+        fi
+        
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        
+        # Check for backend changes
+        BACKEND_CHANGES="false"
+        if echo "$CHANGED_FILES" | grep -qE "(backend/|kubernetes/(?!frontend)|docker-compose\.yml)"; then
+          BACKEND_CHANGES="true"
+          echo "🔧 Backend changes detected"
+        fi
+        
+        # Check for frontend changes  
+        FRONTEND_CHANGES="false"
+        if echo "$CHANGED_FILES" | grep -qE "(frontend/|kubernetes/frontend/|kubernetes/ingress\.yaml)"; then
+          FRONTEND_CHANGES="true"
+          echo "🎨 Frontend changes detected"
+        fi
+        
+        # Handle manual triggers
+        if [ "${{ github.event.inputs.deploy_all }}" = "true" ]; then
+          BACKEND_CHANGES="true"
+          FRONTEND_CHANGES="true"
+          echo "🚀 Force deploy all triggered"
+        elif [ "${{ github.event.inputs.deploy_backend }}" = "true" ]; then
+          BACKEND_CHANGES="true"
+          echo "🚀 Force deploy backend triggered"
+        elif [ "${{ github.event.inputs.deploy_frontend }}" = "true" ]; then
+          FRONTEND_CHANGES="true"
+          echo "🚀 Force deploy frontend triggered"
+        fi
+        
+        echo "backend_changes=$BACKEND_CHANGES" >> $GITHUB_OUTPUT
+        echo "frontend_changes=$FRONTEND_CHANGES" >> $GITHUB_OUTPUT
+        
+        echo ""
+        echo "📋 Deployment Plan:"
+        echo "- Backend: $BACKEND_CHANGES"
+        echo "- Frontend: $FRONTEND_CHANGES"
+
+    - name: Deploy Backend and Frontend
+      if: steps.analyze.outputs.backend_changes == 'true' || steps.analyze.outputs.frontend_changes == 'true'
+      run: |
+        echo "🚀 Deployment Summary:"
+        echo "- Backend changes: ${{ steps.analyze.outputs.backend_changes }}"
+        echo "- Frontend changes: ${{ steps.analyze.outputs.frontend_changes }}"
+        echo ""
+        echo "Note: Individual pipelines will be triggered by their own path-based triggers."
+        echo "This orchestrator provides change analysis and coordination."
+
+    - name: Summary
+      run: |
+        echo "## 🚀 Deployment Orchestration Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Backend deployment:** ${{ steps.analyze.outputs.backend_changes == 'true' && '✅ Triggered' || '⏭️ Skipped (no changes)' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Frontend deployment:** ${{ steps.analyze.outputs.frontend_changes == 'true' && '✅ Triggered' || '⏭️ Skipped (no changes)' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ steps.analyze.outputs.backend_changes }}" = "false" ] && [ "${{ steps.analyze.outputs.frontend_changes }}" = "false" ]; then
+          echo "ℹ️ No deployments triggered. Only infrastructure or non-deployable files were changed." >> $GITHUB_STEP_SUMMARY
+        fi

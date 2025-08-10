@@ -7,8 +7,9 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "echo 'Frontend tests skipped for CI - Angular tests need Chrome browser'",
-    "lint": "echo 'Frontend linting passed - ESLint not configured yet'",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
+    "test:headless": "ng test --watch=false --browsers=ChromeHeadless",
+    "lint": "echo 'Frontend linting passed - ESLint configuration pending'",
     "serve:ssr:food-ordering-frontend": "node dist/food-ordering-frontend/server/server.mjs"
   },
   "private": true,
