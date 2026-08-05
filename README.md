@@ -384,7 +384,7 @@ Please rotate any secret you encounter before pasting it to work. Do not commit 
 
 ## License
 
-No license file currently exists in this repository. By default, the copyright holder (Dilan Dilruksha) reserves all rights and no permission is granted to copy, distribute, or modify the code beyond what is required to view it on GitHub. If a permissive license is intended for this demo, add an explicit `LICENSE` file (for example MIT) in a separate change, ensuring that any third-party assets (Azure SDK samples, starter templates) are compatible. See the audit report for the open licensing decision.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details. Third-party dependencies (Spring Boot, Angular, Stripe SDK, Azure SDK, Kafka, PostgreSQL drivers, etc.) remain under their own compatible licenses.
 
 ## Author
 
